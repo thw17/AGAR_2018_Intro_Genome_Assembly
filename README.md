@@ -19,22 +19,22 @@ vcf
 bed (if there's time/need)
 
 ### Step 1 -- What is a reference genome?
--what is a reference?
--what is fasta format?
--how do we prepare a reference for read mapping?
-  -bwa index, fai index (samtools faidx), sequence dictionary
+- what is a reference?
+- what is fasta format?
+- how do we prepare a reference for read mapping?
+  - bwa index, fai index (samtools faidx), sequence dictionary
 
 ### Step 2 -- Fastq quality control
--what is a fastq?
--basics of exploring a fastq
-  -bioawk
--how do we explore fastq quality?
-  -fastqc
-  -multiqc
--how do we trim fastqs?
-  -bbduk (also trimmomatic/trim galore/etc.)
-  -why and when do we trim fastqs?
-    -what is an adapter?
+- what is a fastq?
+- basics of exploring a fastq
+  - bioawk
+- how do we explore fastq quality?
+  - fastqc
+  - multiqc
+- how do we trim fastqs?
+  - bbduk (also trimmomatic/trim galore/etc.)
+  - why and when do we trim fastqs?
+    - what is an adapter?
 
 ### Step 3 -- Mapping reads
  
