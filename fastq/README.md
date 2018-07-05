@@ -1,6 +1,6 @@
 ## Creating fastqs
 
-Commands based on tutorial by T.Webster available at https://github.com/thw17/ASU_BIO543_Genome_Assembly_2018/tree/master/fastq
+Commands based on tutorial by T. Webster available at https://github.com/thw17/ASU_BIO543_Genome_Assembly_2018/tree/master/fastq
 
 These fastqs were created by subsetting data from 1000 genomes low coverage bams (Example: NA18501.mapped.ILLUMINA.bwa.YRI.low_coverage.20130415.bam) available from here: ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/
 
@@ -51,7 +51,7 @@ The files were then compressed using gzip to save space:
 
 ```
 seqtk sample -s100 NA18501_R1.fastq 5000 > YRI_NA18501_MT.R1.fastq
-seqtk sample -s100 NA18501_R2.fastq 5000 > YRI_NA18501_MT.R1.fastq
+seqtk sample -s100 NA18501_R2.fastq 5000 > YRI_NA18501_MT.R2.fastq
 
 gzip *.fastq
 ```
