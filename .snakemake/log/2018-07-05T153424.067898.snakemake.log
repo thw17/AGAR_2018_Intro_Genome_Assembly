@@ -1,3 +1,0 @@
-WorkflowError in line 1 of /Users/thwebster/Projects/Github_repos/AGAR_2018_sandbox/Snakefile:
-Config file agar2018_assembly_config.json not found.
-  File "/Users/thwebster/Projects/Github_repos/AGAR_2018_sandbox/Snakefile", line 1, in <module>
