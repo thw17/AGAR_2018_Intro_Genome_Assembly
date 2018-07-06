@@ -33,6 +33,7 @@ bbduksh_path = "bbduk.sh"
 bwa_path = "bwa"
 fastqc_path = "fastqc"
 multiqc_path = "multiqc"
+picard_path = "picard"
 samtools_path = "samtools"
 
 rule all:
@@ -40,7 +41,7 @@ rule all:
 		"multiqc_results/multiqc_report.html",
 		"multiqc_trimmed_results/multiqc_report.html",
 		expand(
-			"bams/{sample}.{assembly}.sorted.bam",
+			"bams/{sample}.{assembly}.sorted.mkdup.bam.bai",
 			sample=all_samples,
 			assembly=assemblies)
 
@@ -149,3 +150,36 @@ rule map_and_process_trimmed_reads:
 		"{input.ref} {input.fq1} {input.fq2}"
 		"| {params.samtools} fixmate -O bam - - | {params.samtools} sort "
 		"-O bam -o {output}"
+
+rule index_sorted_bam:
+	input:
+		"bams/{sample}.{assembly}.sorted.bam"
+	output:
+		"bams/{sample}.{assembly}.sorted.bam.bai"
+	params:
+		samtools = samtools_path
+	shell:
+		"{params.samtools} index {input}"
+
+rule picard_mkdups:
+	input:
+		bam = "bams/{sample}.{assembly}.sorted.bam",
+		bai = "bams/{sample}.{assembly}.sorted.bam.bai"
+	output:
+		bam = "bams/{sample}.{assembly}.sorted.mkdup.bam",
+		metrics = "stats/{sample}.{assembly}.picard_mkdup_metrics.txt"
+	params:
+		picard = picard_path
+	shell:
+		"{params.picard} -Xmx1g MarkDuplicates I={input.bam} O={output.bam} "
+		"M={output.metrics}"
+
+rule index_mkdup_bam:
+	input:
+		"bams/{sample}.{assembly}.sorted.mkdup.bam"
+	output:
+		"bams/{sample}.{assembly}.sorted.mkdup.bam.bai"
+	params:
+		samtools = samtools_path
+	shell:
+		"{params.samtools} index {input}"

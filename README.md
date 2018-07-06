@@ -61,7 +61,15 @@ export LC_ALL=en_US.UTF-8 && export LANG=en_US.UTF-8 && {params.multiqc} -o mult
 # Example for one sample
 bwa mem -R '@RG\tID:YRI_NA18498\tSM:YRI_NA18498' reference/human_v37_MT.fasta trimmed_fastqs/YRI_NA18498_trimmed_read1.fastq.gz trimmed_fastqs/YRI_NA18498_trimmed_read2.fastq.gz| samtools fixmate -O bam - - | samtools sort -O bam -o bams/YRI_NA18498.human_v37_MT.sorted.bam
 
-# Marking duplicates
+# Index mapped & sorted BAM (one sample example)
+samtools index bams/YRI_NA18498.human_v37_MT.sorted.bam
+
+### Marking duplicates
+# Example for one sample
+picard -Xmx1g MarkDuplicates I=bams/PUR_HG00640.human_v37_MT.sorted.bam O=bams/PUR_HG00640.human_v37_MT.sorted.mkdup.bam M=stats/PUR_HG00640.human_v37_MT.picard_mkdup_metrics.txt
+
+# Index mkdup BAM (one sample example)
+samtools index bams/PUR_HG00640.human_v37_MT.sorted.mkdup.bam
 
 # BAM statistics
 
