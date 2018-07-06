@@ -71,7 +71,12 @@ picard -Xmx1g MarkDuplicates I=bams/PUR_HG00640.human_v37_MT.sorted.bam O=bams/P
 # Index mkdup BAM (one sample example)
 samtools index bams/PUR_HG00640.human_v37_MT.sorted.mkdup.bam
 
-# BAM statistics
+### BAM statistics
+# BAM stats (one sample example)
+samtools stats bams/CEU_NA06994.human_v37_MT.sorted.mkdup.bam | grep ^SN | cut -f 2- > stats/CEU_NA06994.human_v37_MT.sorted.mkdup.bam.stats
+
+# qualimap (assuming list has already been created)
+qualimap multi-bamqc -d stats/human_v37_MT.qualimap.list -r -outdir stats/qualimap_human_v37_MT/
 
 # Calling variants
 

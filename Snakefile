@@ -34,6 +34,7 @@ bwa_path = "bwa"
 fastqc_path = "fastqc"
 multiqc_path = "multiqc"
 picard_path = "picard"
+qualimap_path = "qualimap"
 samtools_path = "samtools"
 
 rule all:
@@ -41,8 +42,11 @@ rule all:
 		"multiqc_results/multiqc_report.html",
 		"multiqc_trimmed_results/multiqc_report.html",
 		expand(
-			"bams/{sample}.{assembly}.sorted.mkdup.bam.bai",
+			"stats/{sample}.{assembly}.sorted.mkdup.bam.stats",
 			sample=all_samples,
+			assembly=assemblies),
+		expand(
+			"stats/qualimap_{assembly}/multisampleBamQcReport.html",
 			assembly=assemblies)
 
 rule prepare_reference:
@@ -183,3 +187,43 @@ rule index_mkdup_bam:
 		samtools = samtools_path
 	shell:
 		"{params.samtools} index {input}"
+
+rule bam_stats:
+	input:
+		bam = "bams/{sample}.{assembly}.sorted.mkdup.bam",
+		bai = "bams/{sample}.{assembly}.sorted.mkdup.bam.bai"
+	output:
+		"stats/{sample}.{assembly}.sorted.mkdup.bam.stats"
+	params:
+		samtools = samtools_path
+	shell:
+		"{params.samtools} stats {input.bam} | grep ^SN | cut -f 2- > {output}"
+
+rule create_qualimap_list:
+	input:
+		bams = lambda wildcards: expand(
+			"bams/{sample}.{genome}.sorted.mkdup.bam",
+			genome=wildcards.assembly,
+			sample=all_samples),
+		bais = lambda wildcards: expand(
+			"bams/{sample}.{genome}.sorted.mkdup.bam.bai",
+			genome=wildcards.assembly,
+			sample=all_samples),
+	output:
+		"stats/{assembly}.qualimap.list"
+	run:
+		shell("echo -n > {output}")
+		for i in input.bams:
+			sm = os.path.basename(i).split(".")[0]
+			shell("echo '{}\t{}' >> {{output}}".format(sm, i))
+
+rule qualimap_multibamqc:
+	input:
+		"stats/{assembly}.qualimap.list"
+	output:
+		"stats/qualimap_{assembly}/multisampleBamQcReport.html"
+	params:
+		qualimap = qualimap_path,
+		out_dir = "stats/qualimap_{assembly}/"
+	shell:
+		"{params.qualimap} multi-bamqc -d {input} -r -outdir {params.out_dir}"
