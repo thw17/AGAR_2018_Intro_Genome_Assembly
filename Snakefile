@@ -28,6 +28,7 @@ yri = [
 all_samples = ceu + pur + yri
 
 # Tool paths (change if tools not in PATH)
+bbduksh_path = "bbduk.sh"
 bwa_path = "bwa"
 fastqc_path = "fastqc"
 multiqc_path = "multiqc"
@@ -35,7 +36,8 @@ samtools_path = "samtools"
 
 rule all:
 	input:
-		"multiqc_results/multiqc_report.html"
+		"multiqc_results/multiqc_report.html",
+		"multiqc_trimmed_results/multiqc_report.html"
 
 rule prepare_reference:
 	input:
@@ -82,3 +84,43 @@ rule multiqc_analysis:
 		"export LC_ALL=en_US.UTF-8 && export LANG=en_US.UTF-8 && "
 		"{params.multiqc} --interactive "
 		"-o multiqc_results fastqc_results"
+
+rule trim_adapters_paired_bbduk:
+	input:
+		fq1 = "fastq/{sample}_MT.R1.fastq.gz",
+		fq2 = "fastq/{sample}_MT.R2.fastq.gz"
+	output:
+		out_fq1 = "trimmed_fastqs/{sample}_trimmed_read1.fastq.gz",
+		out_fq2 = "trimmed_fastqs/{sample}_trimmed_read2.fastq.gz"
+	params:
+		bbduksh = bbduksh_path
+	shell:
+		"{params.bbduksh} -Xmx1g in1={input.fq1} in2={input.fq2} "
+		"out1={output.out_fq1} out2={output.out_fq2} "
+		"ref=misc/adapter_sequence.fa ktrim=r k=21 mink=11 hdist=2 tbo tpe "
+		"qtrim=rl trimq=15 minlen=50 maq=20"
+
+rule fastqc_analysis_trimmed:
+	input:
+		fq1 = "trimmed_fastqs/{sample}_trimmed_read1.fastq.gz",
+		fq2 = "trimmed_fastqs/{sample}_trimmed_read2.fastq.gz"
+	output:
+		html1 = "fastqc_trimmed_results/{sample}_trimmed_read1_fastqc.html",
+		html2 = "fastqc_trimmed_results/{sample}_trimmed_read2_fastqc.html"
+	params:
+		fastqc = fastqc_path
+	shell:
+		"{params.fastqc} -o fastqc_trimmed_results {input.fq1} {input.fq2}"
+
+rule multiqc_analysis_trimmed:
+	input:
+		expand(
+			"fastqc_trimmed_results/{sample}_trimmed_{read}_fastqc.html",
+			sample=all_samples, read=["read1", "read2"])
+	output:
+		"multiqc_trimmed_results/multiqc_report.html"
+	params:
+		multiqc = multiqc_path
+	shell:
+		"export LC_ALL=en_US.UTF-8 && export LANG=en_US.UTF-8 && "
+		"{params.multiqc} -o multiqc_trimmed_results fastqc_trimmed_results"

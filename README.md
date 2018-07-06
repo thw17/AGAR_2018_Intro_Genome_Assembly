@@ -39,13 +39,23 @@ samtools dict -o reference/human_v37_MT.dict reference/human_v37_MT.fasta
 
 bwa index reference/human_v37_MT.fasta
 
-### Fastq QC
+### Fastqc
 # Example command for one file
 fastqc -o fastqc_results fastq/CEU_NA07000_MT.R1.fastq.gz
 
-# Fastq Trimming
+### Multiqc
+export LC_ALL=en_US.UTF-8 && export LANG=en_US.UTF-8 && multiqc --interactive -o multiqc_results fastqc_results"
 
-# Trimmed Fastq QC
+### Fastq Trimming
+# Example command for one sample
+bbduk.sh -Xmx1g in1=fastq/PUR_HG00553_MT.R1.fastq.gz in2=fastq/PUR_HG00553_MT.R2.fastq.gz out1=trimmed_fastqs/PUR_HG00553_trimmed_read1.fastq.gz out2=trimmed_fastqs/PUR_HG00553_trimmed_read2.fastq.gz ref=misc/adapter_sequence.fa ktrim=r k=21 mink=11 hdist=2 tbo tpe qtrim=rl trimq=15 minlen=50 maq=20
+
+### Trimmed Fastqc
+# Example for one sample
+fastqc -o fastqc_trimmed_results trimmed_fastqs/CEU_NA06986_trimmed_read1.fastq.gz trimmed_fastqs/CEU_NA06986_trimmed_read2.fastq.gz
+
+### Trimmed Multiqc
+export LC_ALL=en_US.UTF-8 && export LANG=en_US.UTF-8 && {params.multiqc} -o multiqc_trimmed_results fastqc_trimmed_results"
 
 # Mapping reads (also fixmate and sorting)
 
