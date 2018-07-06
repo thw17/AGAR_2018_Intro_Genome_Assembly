@@ -27,7 +27,7 @@ conda config --add channels conda-forge
 conda config --add channels bioconda
 
 ### Create Conda environment for analyses
-conda create -n agar2018 python=3.6 snakemake samtools bwa bioawk fastqc multiqc bbduk qualimap gatk4 vcftools picard
+conda create -n agar2018 python=3.6 snakemake samtools bwa bioawk fastqc multiqc bbmap qualimap gatk4 vcftools picard
 
 ### Load Conda environment
 source activate agar2018
@@ -57,7 +57,9 @@ fastqc -o fastqc_trimmed_results trimmed_fastqs/CEU_NA06986_trimmed_read1.fastq.
 ### Trimmed Multiqc
 export LC_ALL=en_US.UTF-8 && export LANG=en_US.UTF-8 && {params.multiqc} -o multiqc_trimmed_results fastqc_trimmed_results"
 
-# Mapping reads (also fixmate and sorting)
+### Mapping reads (also fixmate and sorting)
+# Example for one sample
+bwa mem -R '@RG\tID:YRI_NA18498\tSM:YRI_NA18498' reference/human_v37_MT.fasta trimmed_fastqs/YRI_NA18498_trimmed_read1.fastq.gz trimmed_fastqs/YRI_NA18498_trimmed_read2.fastq.gz| samtools fixmate -O bam - - | samtools sort -O bam -o bams/YRI_NA18498.human_v37_MT.sorted.bam
 
 # Marking duplicates
 

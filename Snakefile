@@ -26,6 +26,7 @@ yri = [
 	"YRI_NA18501"]
 
 all_samples = ceu + pur + yri
+assemblies = ["human_v37_MT"]
 
 # Tool paths (change if tools not in PATH)
 bbduksh_path = "bbduk.sh"
@@ -37,7 +38,11 @@ samtools_path = "samtools"
 rule all:
 	input:
 		"multiqc_results/multiqc_report.html",
-		"multiqc_trimmed_results/multiqc_report.html"
+		"multiqc_trimmed_results/multiqc_report.html",
+		expand(
+			"bams/{sample}.{assembly}.sorted.bam",
+			sample=all_samples,
+			assembly=assemblies)
 
 rule prepare_reference:
 	input:
@@ -124,3 +129,23 @@ rule multiqc_analysis_trimmed:
 	shell:
 		"export LC_ALL=en_US.UTF-8 && export LANG=en_US.UTF-8 && "
 		"{params.multiqc} -o multiqc_trimmed_results fastqc_trimmed_results"
+
+rule map_and_process_trimmed_reads:
+	input:
+		fq1 = "trimmed_fastqs/{sample}_trimmed_read1.fastq.gz",
+		fq2 = "trimmed_fastqs/{sample}_trimmed_read2.fastq.gz",
+		ref = "reference/{assembly}.fasta",
+		fai = "reference/{assembly}.fasta.fai"
+	output:
+		"bams/{sample}.{assembly}.sorted.bam"
+	params:
+		id = "{sample}",
+		sm = "{sample}",
+		bwa = bwa_path,
+		samtools = samtools_path
+	shell:
+		" {params.bwa} mem -R "
+	 	"'@RG\\tID:{params.id}\\tSM:{params.sm}' "
+		"{input.ref} {input.fq1} {input.fq2}"
+		"| {params.samtools} fixmate -O bam - - | {params.samtools} sort "
+		"-O bam -o {output}"
