@@ -32,6 +32,7 @@ assemblies = ["human_v37_MT"]
 bbduksh_path = "bbduk.sh"
 bwa_path = "bwa"
 fastqc_path = "fastqc"
+gatk_path = "gatk"
 multiqc_path = "multiqc"
 picard_path = "picard"
 qualimap_path = "qualimap"
@@ -46,7 +47,10 @@ rule all:
 			sample=all_samples,
 			assembly=assemblies),
 		expand(
-			"stats/qualimap_{assembly}/multisampleBamQcReport.html",
+			"stats/qualimap/{assembly}/multisampleBamQcReport.html",
+			assembly=assemblies),
+		expand(
+			"genotyped_vcfs/{assembly}.gatk.called.raw.vcf.gz",
 			assembly=assemblies)
 
 rule prepare_reference:
@@ -92,7 +96,7 @@ rule multiqc_analysis:
 		multiqc = multiqc_path
 	shell:
 		"export LC_ALL=en_US.UTF-8 && export LANG=en_US.UTF-8 && "
-		"{params.multiqc} --interactive "
+		"{params.multiqc} --interactive -f "
 		"-o multiqc_results fastqc_results"
 
 rule trim_adapters_paired_bbduk:
@@ -133,7 +137,7 @@ rule multiqc_analysis_trimmed:
 		multiqc = multiqc_path
 	shell:
 		"export LC_ALL=en_US.UTF-8 && export LANG=en_US.UTF-8 && "
-		"{params.multiqc} -o multiqc_trimmed_results fastqc_trimmed_results"
+		"{params.multiqc} --interactive -f -o multiqc_trimmed_results fastqc_trimmed_results"
 
 rule map_and_process_trimmed_reads:
 	input:
@@ -199,31 +203,92 @@ rule bam_stats:
 	shell:
 		"{params.samtools} stats {input.bam} | grep ^SN | cut -f 2- > {output}"
 
+rule qualimap_per_sample:
+	input:
+		bam = "bams/{sample}.{assembly}.sorted.mkdup.bam",
+		bai = "bams/{sample}.{assembly}.sorted.mkdup.bam.bai"
+	output:
+		"stats/qualimap/{assembly}/{sample}"
+	params:
+		qualimap = qualimap_path,
+		out_dir = "stats/qualimap/{assembly}/{sample}/"
+	shell:
+		"{params.qualimap} bamqc "
+		"-bam {input.bam} -nt 1 "
+		"-outdir {params.out_dir}"
+
+
 rule create_qualimap_list:
 	input:
-		bams = lambda wildcards: expand(
-			"bams/{sample}.{genome}.sorted.mkdup.bam",
-			genome=wildcards.assembly,
-			sample=all_samples),
-		bais = lambda wildcards: expand(
-			"bams/{sample}.{genome}.sorted.mkdup.bam.bai",
-			genome=wildcards.assembly,
-			sample=all_samples),
+		lambda wildcards: expand(
+			"stats/qualimap/{genome}/{sample}",
+			sample=all_samples,
+			genome=wildcards.assembly)
 	output:
-		"stats/{assembly}.qualimap.list"
+		"stats/qualimap/{assembly}/qualimap.list"
 	run:
 		shell("echo -n > {output}")
-		for i in input.bams:
-			sm = os.path.basename(i).split(".")[0]
+		for i in input:
+			sm = os.path.basename(i)
 			shell("echo '{}\t{}' >> {{output}}".format(sm, i))
 
 rule qualimap_multibamqc:
 	input:
-		"stats/{assembly}.qualimap.list"
+		"stats/qualimap/{assembly}/qualimap.list"
 	output:
-		"stats/qualimap_{assembly}/multisampleBamQcReport.html"
+		"stats/qualimap/{assembly}/multisampleBamQcReport.html"
 	params:
 		qualimap = qualimap_path,
-		out_dir = "stats/qualimap_{assembly}/"
+		out_dir = "stats/qualimap/{assembly}/"
 	shell:
-		"{params.qualimap} multi-bamqc -d {input} -r -outdir {params.out_dir}"
+		"{params.qualimap} multi-bamqc -d {input} -outdir {params.out_dir}"
+
+rule gatk_gvcf:
+	input:
+		ref = "reference/{assembly}.fasta",
+		bam = "bams/{sample}.{assembly}.sorted.mkdup.bam",
+		bai = "bams/{sample}.{assembly}.sorted.mkdup.bam.bai"
+	output:
+		"gvcfs/{sample}.{assembly}.g.vcf.gz"
+	params:
+		gatk = gatk_path
+	shell:
+		"""{params.gatk} --java-options "-Xmx1g" """
+		"""HaplotypeCaller -R {input.ref} -I {input.bam} """
+		"""-ERC GVCF -O {output}"""
+
+rule gatk_combinegvcfs:
+	input:
+		ref = "reference/{assembly}.fasta",
+		gvcfs = lambda wildcards: expand(
+			"gvcfs/{sample}.{genome}.g.vcf.gz",
+			sample=all_samples,
+			genome=wildcards.assembly)
+	output:
+		"combined_gvcfs/{assembly}.gatk.combinegvcf.g.vcf.gz"
+	params:
+		gatk = gatk_path
+	run:
+		variant_files = []
+		for i in input.gvcfs:
+			variant_files.append("--variant " + i)
+		variant_files = " ".join(variant_files)
+		print(
+			"""{params.gatk} --java-options "-Xmx1g" """
+			"""CombineGVCFs -R {input.ref} {variant_files} -O {output}"""
+		)
+		shell(
+			"""{params.gatk} --java-options "-Xmx1g" """
+			"""CombineGVCFs -R {input.ref} {variant_files} -O {output}""")
+
+rule gatk_genotypegvcf:
+	input:
+		ref = "reference/{assembly}.fasta",
+		gvcf = "combined_gvcfs/{assembly}.gatk.combinegvcf.g.vcf.gz"
+	output:
+		"genotyped_vcfs/{assembly}.gatk.called.raw.vcf.gz"
+	params:
+		gatk = gatk_path
+	shell:
+		"""{params.gatk} --java-options "-Xmx1g" """
+		"""GenotypeGVCFs -R {input.ref} -V {input.gvcf} -O {output}"""
