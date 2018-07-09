@@ -75,10 +75,21 @@ samtools index bams/PUR_HG00640.human_v37_MT.sorted.mkdup.bam
 # BAM stats (one sample example)
 samtools stats bams/CEU_NA06994.human_v37_MT.sorted.mkdup.bam | grep ^SN | cut -f 2- > stats/CEU_NA06994.human_v37_MT.sorted.mkdup.bam.stats
 
-# qualimap (assuming list has already been created)
-qualimap multi-bamqc -d stats/human_v37_MT.qualimap.list -r -outdir stats/qualimap_human_v37_MT/
+# qualimap
+# first, run per sample (one sample example)
+qualimap bamqc -bam bams/CEU_NA06986.human_v37_MT.sorted.mkdup.bam -nt 1 -outdir stats/qualimap/human_v37_MT/CEU_NA06986/
 
-# Calling variants
+# then run qualimap's multi-bamqc on all individual results
+qualimap multi-bamqc -d stats/qualimap/human_v37_MT/qualimap.list -outdir stats/qualimap/human_v37_MT/
+
+### Calling variants
+# GVCF per sample (one sample example)
+gatk --java-options "-Xmx1g" HaplotypeCaller -R reference/human_v37_MT.fasta -I bams/CEU_NA07000.human_v37_MT.sorted.mkdup.bam -ERC GVCF -O gvcfs/CEU_NA07000.human_v37_MT.g.vcf.gz
+
+# CombineGVCFs
+
+# GenotypeGVCFs
+gatk --java-options "-Xmx1g" GenotypeGVCFs -R reference/human_v37_MT.fasta -V combined_gvcfs/human_v37_MT.gatk.combinegvcf.g.vcf.gz -O genotyped_vcfs/human_v37_MT.gatk.called.raw.vcf.gz
 
 # Filtering variants
 ```
