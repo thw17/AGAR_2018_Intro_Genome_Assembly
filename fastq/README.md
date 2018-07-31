@@ -1,6 +1,6 @@
 ## Creating fastqs
 
-Commands based on tutorial by T. Webster available at https://github.com/thw17/ASU_BIO543_Genome_Assembly_2018/tree/master/fastq
+Files prepared by Maria Nieves Colon. Commands based, in part, on tutorial by T. Webster available at https://github.com/thw17/ASU_BIO543_Genome_Assembly_2018/tree/master/fastq
 
 These fastqs were created by subsetting data from 1000 genomes low coverage bams (Example: NA18501.mapped.ILLUMINA.bwa.YRI.low_coverage.20130415.bam) available from here: ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/
 
