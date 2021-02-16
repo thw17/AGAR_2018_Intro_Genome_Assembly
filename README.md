@@ -1,5 +1,7 @@
 # AGAR 2018 Session 2: *The basics of read mapping and variant calling*
 
+*Updated 02-15-2021 to reflect changes in conda channel order suggested by the Bioconda team (priority of conda-forge > bioconda > defaults). Only lines 184-194 have changed. All other content remains exactly as presented at the 2018 workshop.
+
 *Content by Tim Webster (Arizona State University and University of Utah), 2018. Available under a GNU General Public v3 license. Much of this content has been updated and adapted from a previous version of this activity (also by Webster) [that you can find here](https://github.com/thw17/ASU_BIO543_Genome_Assembly_2018).*
 
 This session features a hands on introduction to the basics of read mapping, BAM file processing, and variant calling. We will also discuss various file types that you'll encounter along the way: FASTA, FASTQ, SAM/BAM, BED, and VCF.
@@ -184,12 +186,12 @@ We're going to use [Conda](https://conda.io/docs/), described above, to install 
   ```
   $ conda config --add channels defaults
 
-  $ conda config --add channels conda-forge
-
   $ conda config --add channels bioconda
+  
+   $ conda config --add channels conda-forge
   ```
 
-	This sets the channel ``bioconda`` as our highest priority, followed by ``conda-forge``, and then ``defaults`` at the lowest priority. You can confirm this information (and more) with the command:
+	This sets the channel ``conda-forge`` as our highest priority, followed by ``bioconda``, and then ``defaults`` at the lowest priority. You can confirm this information (and more) with the command:
 
   ```
   $ conda info
